@@ -29,13 +29,54 @@ URL = {"a": "http://127.0.0.1:8001", "b": "http://127.0.0.1:8002"}
 
 
 def probe(region: str, timeout: float) -> tuple[bool, str]:
-    """TODO: trả về (ready, reason). Timeout PHẢI có — netblock làm request treo mãi."""
-    raise NotImplementedError
+    """Probe readiness with a bounded timeout, including the failure reason."""
+    try:
+        response = httpx.get(f"{URL[region]}/readyz", timeout=timeout)
+        if response.status_code == 200:
+            return True, "ready"
+        try:
+            reason = ", ".join(response.json().get("reasons", []))
+        except (ValueError, TypeError):
+            reason = ""
+        return False, reason or f"HTTP {response.status_code}"
+    except httpx.RequestError as exc:
+        return False, type(exc).__name__
 
 
 def run(interval: float, timeout: float, threshold: int, duration: float, out: pathlib.Path):
-    """TODO: vòng lặp poll + phát hiện transition + ghi JSONL."""
-    raise NotImplementedError
+    """Poll on a monotonic schedule and append only health transitions."""
+    if interval <= 0 or timeout <= 0 or threshold < 1 or duration < 0:
+        raise ValueError("interval/timeout > 0, threshold >= 1, duration >= 0 required")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    # Starting healthy avoids logging startup as a transition. A standby still
+    # becomes UNHEALTHY after the same consecutive-failure threshold.
+    status = {region: "HEALTHY" for region in URL}
+    failures = dict.fromkeys(URL, 0)
+    end = time.monotonic() + duration
+    with out.open("a", encoding="utf-8") as stream:
+        while time.monotonic() < end:
+            started = time.monotonic()
+            for region in URL:
+                ready, reason = probe(region, timeout)
+                failures[region] = 0 if ready else failures[region] + 1
+                target = "HEALTHY" if ready else "UNHEALTHY"
+                if target == status[region] or (not ready and failures[region] < threshold):
+                    continue
+                previous, status[region] = status[region], target
+                record = {
+                    "ts": time.time(),
+                    "iso": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    "event": "state_change", "region": region,
+                    "from": previous, "to": target, "reason": reason,
+                    "interval_s": interval, "threshold": threshold,
+                    "consecutive_fails": failures[region],
+                }
+                stream.write(json.dumps(record, ensure_ascii=False) + "\n")
+                stream.flush()
+                print(json.dumps(record, ensure_ascii=False), flush=True)
+            remaining = min(started + interval, end) - time.monotonic()
+            if remaining > 0:
+                time.sleep(remaining)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,31 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.3.4, pluggy-1.6.0 -- /mnt/e/D/learn_AI/LAB/Track2/Day23-NguyenNgocBao_2A202602951-DisaterRecovery4AIInfrastructure/run/venv-linux/bin/python
+cachedir: .pytest_cache
+rootdir: /mnt/e/D/learn_AI/LAB/Track2/Day23-NguyenNgocBao_2A202602951-DisaterRecovery4AIInfrastructure
+plugins: anyio-4.15.1
+collecting ... collected 22 items
+
+tests/test_failover.py::test_rpo_dem_dung_so_doc_bi_mat PASSED           [  4%]
+tests/test_failover.py::test_health_checker_can_threshold_lien_tiep PASSED [  9%]
+tests/test_failover.py::test_failover_khong_cutover_khi_target_chua_ready PASSED [ 13%]
+tests/test_rto_evidence.py::test_drill1_ton_tai_va_khong_phuc_hoi PASSED [ 18%]
+tests/test_rto_evidence.py::test_drill2_hop_le PASSED                    [ 22%]
+tests/test_rto_evidence.py::test_rto_do_duoc_bang_timestamp PASSED       [ 27%]
+tests/test_rto_evidence.py::test_health_check_interval_duoc_ghi_lai PASSED [ 31%]
+tests/test_rto_evidence.py::test_rpo_duoc_do_chu_khong_uoc_luong PASSED  [ 36%]
+tests/test_rto_evidence.py::test_evidence_table_tro_vao_file_that PASSED [ 40%]
+tests/test_rto_evidence.py::test_chaos_khong_giet_ca_hai_region PASSED   [ 45%]
+tests/test_rto_evidence.py::test_evidence_table_da_dien_that PASSED      [ 50%]
+tests/test_rto_evidence.py::test_so_trong_bang_khop_voi_so_trong_log PASSED [ 54%]
+tests/test_rto_evidence.py::test_postmortem_co_gap_analysis PASSED       [ 59%]
+dr/test_workflow.py::test_threshold_is_per_region_and_resets_after_success PASSED [ 63%]
+dr/test_workflow.py::test_cutover_requires_readiness_after_restore_and_scale[False] PASSED [ 68%]
+dr/test_workflow.py::test_cutover_requires_readiness_after_restore_and_scale[True] PASSED [ 72%]
+dr/test_workflow.py::test_confirmation_defaults_to_no[-False] PASSED     [ 77%]
+dr/test_workflow.py::test_confirmation_defaults_to_no[n-False] PASSED    [ 81%]
+dr/test_workflow.py::test_confirmation_defaults_to_no[y-True] PASSED     [ 86%]
+dr/test_workflow.py::test_confirmation_defaults_to_no[YES-True] PASSED   [ 90%]
+dr/test_workflow.py::test_runbook_single_failover_and_ten_real_client_calls[False] PASSED [ 95%]
+dr/test_workflow.py::test_runbook_single_failover_and_ten_real_client_calls[True] PASSED [100%]
+
+============================== 22 passed in 1.03s ==============================

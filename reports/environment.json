@@ -1,0 +1,17 @@
+{
+  "ts": 1791523875.4359088,
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "platform": "linux",
+  "chaos_backend": "bare",
+  "kernel_release": "6.18.40.1-microsoft-standard-WSL2",
+  "distribution": "Ubuntu-24.04",
+  "wsl_version": "2",
+  "mock": true,
+  "warmup_seconds": 6,
+  "edge_ttl_seconds": 5,
+  "health_interval_s": 5,
+  "threshold": 3,
+  "snapshot_every_s": 30,
+  "snapshot_backend": "fs",
+  "graded_linux_path_verified": true
+}

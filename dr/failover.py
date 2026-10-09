@@ -35,13 +35,92 @@ LOG = pathlib.Path("reports/failover-events.jsonl")
 
 
 def emit(**kw):
-    """TODO: append 1 dòng JSONL có ts + iso vào LOG, và print ra stdout."""
-    raise NotImplementedError
+    """Append one timestamped event and expose it to the operator."""
+    record = {"ts": time.time(),
+              "iso": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), **kw}
+    LOG.parent.mkdir(parents=True, exist_ok=True)
+    with LOG.open("a", encoding="utf-8") as stream:
+        stream.write(json.dumps(record, ensure_ascii=False) + "\n")
+    print(json.dumps(record, ensure_ascii=False), flush=True)
+    return record
+
+
+def state_of(region: str) -> dict:
+    response = httpx.get(f"{URL[region]}/v1/state", timeout=2.0)
+    response.raise_for_status()
+    return response.json()
 
 
 def failover(target: str, backend: str, wait: float) -> dict:
-    """TODO: 5 bước ở trên, đúng thứ tự."""
-    raise NotImplementedError
+    """Restore and prepare the target; cut over only after readiness succeeds."""
+    if target not in URL or backend not in {"fs", "minio"} or wait <= 0:
+        raise ValueError("invalid target/backend or nonpositive wait")
+    started = time.monotonic()
+    stage = "1_verify_target"
+    try:
+        initial = state_of(target)
+        emit(step=stage, target=target, state=initial)
+
+        stage = "2_restore_snapshot"
+        restore_started = time.monotonic()
+        manifest = snapshot.get(target, backend)
+        primary = manifest.get("source_region", "b" if target == "a" else "a")
+        if primary == target:
+            raise ValueError("snapshot source must differ from the failover target")
+        rpo = snapshot.rpo(pathlib.Path(f"state/region-{primary}/vectors.sqlite"),
+                           pathlib.Path(f"state/region-{target}/vectors.sqlite"))
+        restored = state_of(target)
+        if not restored.get("weights") or restored.get("count", 0) < 1:
+            raise ValueError("restored target has no model weights or documents")
+        emit(step=stage, target=target, backend=backend,
+             embed_model_version=manifest["embed_model_version"],
+             snapshot_at=manifest["snapshot_at"],
+             restore_duration_s=round(time.monotonic() - restore_started, 3),
+             count=restored["count"], weights=restored["weights"], **rpo)
+
+        stage = "3_scale_pool"
+        pool = pathlib.Path(f"state/region-{target}/pool_state")
+        pool.write_text("full", encoding="utf-8")
+        emit(step=stage, target=target, pool_state="full")
+
+        stage = "4_wait_ready"
+        ready_started = time.monotonic()
+        deadline = ready_started + wait
+        last_reason = "not probed"
+        while time.monotonic() < deadline:
+            remaining = deadline - time.monotonic()
+            try:
+                response = httpx.get(f"{URL[target]}/readyz", timeout=min(2.0, remaining))
+                if response.status_code == 200:
+                    readiness = response.json()
+                    emit(step=stage, target=target, ready=True,
+                         waited_s=round(time.monotonic() - ready_started, 3))
+                    break
+                last_reason = f"HTTP {response.status_code}"
+            except httpx.RequestError as exc:
+                last_reason = type(exc).__name__
+            time.sleep(max(0.0, min(0.25, deadline - time.monotonic())))
+        else:
+            raise TimeoutError(f"region-{target} not ready after {wait}s: {last_reason}")
+
+        stage = "5_dns_cutover"
+        active = pathlib.Path("edge/active_region")
+        # Replace the complete pointer atomically, so the proxy cannot read an
+        # empty file while a concurrent write is in progress.
+        temporary = active.with_suffix(".tmp")
+        temporary.write_text(target, encoding="utf-8")
+        temporary.replace(active)
+        cutover = emit(step=stage, target=target, active_region=target, ok=True)
+        return {"ok": True, "target": target, "cutover_ts": cutover["ts"],
+                "state": {"region": target, "pool_state": "full",
+                          "count": readiness["vectors"]["count"],
+                          "weights": restored["weights"]},
+                "embed_model_version": manifest["embed_model_version"],
+                "elapsed_s": round(time.monotonic() - started, 3), **rpo}
+    except (Exception, SystemExit) as exc:
+        emit(event="failover_aborted", failed_step=stage, target=target,
+             ok=False, reason=str(exc))
+        return {"ok": False, "target": target, "failed_step": stage, "reason": str(exc)}
 
 
 if __name__ == "__main__":
@@ -50,4 +129,6 @@ if __name__ == "__main__":
     p.add_argument("--backend", default="fs", choices=["fs", "minio"])
     p.add_argument("--wait", type=float, default=60)
     a = p.parse_args()
-    print(json.dumps(failover(a.target, a.backend, a.wait), indent=2))
+    result = failover(a.target, a.backend, a.wait)
+    print(json.dumps(result, indent=2))
+    raise SystemExit(0 if result["ok"] else 1)

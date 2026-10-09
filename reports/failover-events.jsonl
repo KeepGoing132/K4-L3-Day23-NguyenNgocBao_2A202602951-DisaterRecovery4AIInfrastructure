@@ -1,0 +1,17 @@
+{"ts": 1791523964.670984, "iso": "2026-10-09T05:32:44Z", "step": "1_verify_target", "target": "b", "state": {"region": "b", "pool_state": "warm", "weights": false, "count": 0, "latest_doc_ts": null, "ts": 1791523964.6704051}}
+{"ts": 1791523964.8162227, "iso": "2026-10-09T05:32:44Z", "step": "2_restore_snapshot", "target": "b", "backend": "fs", "embed_model_version": "embed-model=vi-e5-base@v3", "snapshot_at": 1791523949.6032832, "restore_duration_s": 0.143, "count": 216, "weights": true, "primary_latest_doc_ts": 1791523963.5961475, "restored_latest_doc_ts": 1791523949.5918853, "rpo_seconds": 14.0, "docs_lost": 7}
+{"ts": 1791523964.8198097, "iso": "2026-10-09T05:32:44Z", "step": "3_scale_pool", "target": "b", "pool_state": "full"}
+{"ts": 1791523971.0630536, "iso": "2026-10-09T05:32:51Z", "step": "4_wait_ready", "target": "b", "ready": true, "waited_s": 6.231}
+{"ts": 1791523971.068449, "iso": "2026-10-09T05:32:51Z", "step": "5_dns_cutover", "target": "b", "active_region": "b", "ok": true}
+{"ts": 1791523971.227323, "iso": "2026-10-09T05:32:51Z", "event": "golden_signal_request", "target": "b", "seq": 0, "ok": true, "status": 200, "latency_ms": 21.942}
+{"ts": 1791523971.2513587, "iso": "2026-10-09T05:32:51Z", "event": "golden_signal_request", "target": "b", "seq": 1, "ok": true, "status": 200, "latency_ms": 20.973}
+{"ts": 1791523971.2681437, "iso": "2026-10-09T05:32:51Z", "event": "golden_signal_request", "target": "b", "seq": 2, "ok": true, "status": 200, "latency_ms": 14.389}
+{"ts": 1791523971.2869947, "iso": "2026-10-09T05:32:51Z", "event": "golden_signal_request", "target": "b", "seq": 3, "ok": true, "status": 200, "latency_ms": 16.262}
+{"ts": 1791523971.3041046, "iso": "2026-10-09T05:32:51Z", "event": "golden_signal_request", "target": "b", "seq": 4, "ok": true, "status": 200, "latency_ms": 14.914}
+{"ts": 1791523971.3198152, "iso": "2026-10-09T05:32:51Z", "event": "golden_signal_request", "target": "b", "seq": 5, "ok": true, "status": 200, "latency_ms": 13.769}
+{"ts": 1791523971.3366797, "iso": "2026-10-09T05:32:51Z", "event": "golden_signal_request", "target": "b", "seq": 6, "ok": true, "status": 200, "latency_ms": 14.774}
+{"ts": 1791523971.3555975, "iso": "2026-10-09T05:32:51Z", "event": "golden_signal_request", "target": "b", "seq": 7, "ok": true, "status": 200, "latency_ms": 16.475}
+{"ts": 1791523971.3720384, "iso": "2026-10-09T05:32:51Z", "event": "golden_signal_request", "target": "b", "seq": 8, "ok": true, "status": 200, "latency_ms": 14.338}
+{"ts": 1791523971.3885596, "iso": "2026-10-09T05:32:51Z", "event": "golden_signal_request", "target": "b", "seq": 9, "ok": true, "status": 200, "latency_ms": 14.516}
+{"ts": 1791524072.9985042, "iso": "2026-10-09T05:34:32Z", "step": "1_verify_target", "target": "b", "state": {"region": "b", "pool_state": "warm"}}
+{"ts": 1791524073.0488677, "iso": "2026-10-09T05:34:33Z", "event": "failover_aborted", "failed_step": "2_restore_snapshot", "target": "b", "ok": false, "reason": "restored target has no model weights or documents"}
